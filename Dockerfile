@@ -76,6 +76,7 @@ RUN \
     php82-xmlreader \
     php82-xsl \
     whois && \
+    apk add gettext libintl && \
   apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
     php82-pecl-mcrypt && \
   echo "**** install certbot plugins ****" && \
