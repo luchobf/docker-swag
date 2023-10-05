@@ -23,8 +23,46 @@ for i in "${SANED_VARS[@]}"; do
     export echo "${i}"="$(echo "${!i}" | tr '[:upper:]' '[:lower:]')"
 done
 
+# Fetch the Certbot version
+version_string=$(certbot --version 2>&1)
+
+# Extract just the version number from the string
+version=$(echo "$version_string" | awk '{print $2}')
+
+# Split the version numbers into arrays for comparison
+IFS='.' read -ra VER1 <<< "$version"
+IFS='.' read -ra VER2 <<< "2.6.0"
+
+# Initialize a flag variable
+is_higher=0
+
+# Compare the version numbers
+for i in "${!VER1[@]}"; do
+  if [[ -z ${VER2[i]} ]]; then
+    VER2[i]=0
+  fi
+
+  if ((10#${VER1[i]} > 10#${VER2[i]})); then
+    is_higher=1
+    break
+  elif ((10#${VER1[i]} < 10#${VER2[i]})); then
+    is_higher=0
+    break
+  fi
+done
+
+# Perform actions based on the comparison result
+if [ $is_higher -eq 1 ]; then
+  echo "Version is higher than 2.6.0"
+  CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e 's/^Entry point: EntryPoint(name='\''cpanel'\'',/Entry point: EntryPoint(name='\''dns-cpanel'\'',/' -e '/^Entry point: EntryPoint(name='\''dns-/!d' -e 's/^Entry point: EntryPoint(name='\''dns-\([^'\'']*\)'\''.*/\1/' | sort)
+else
+  echo "Version is lower or equal to 2.6.0"
+  CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e 's/^Entry point: cpanel =/Entry point: dns-cpanel =/' -e '/^Entry point: dns-/!d' -e 's/^Entry point: dns-\([^ ]*\) =.*/\1/' | sort)
+fi
+
+
 # check to make sure DNSPLUGIN is selected if dns validation is used
-CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e 's/^Entry point: cpanel =/Entry point: dns-cpanel =/' -e '/^Entry point: dns-/!d' -e 's/^Entry point: dns-\([^ ]*\) =.*/\1/' | sort)
+# echo "Certbot DNS plugins available: ${CERTBOT_DNS_AUTHENTICATORS}"
 if [[ "${VALIDATION}" = "dns" ]] && ! echo "${CERTBOT_DNS_AUTHENTICATORS}" | grep -q "${DNSPLUGIN}"; then
     echo "Please set the DNSPLUGIN variable to one of the following:"
     echo "${CERTBOT_DNS_AUTHENTICATORS}"
