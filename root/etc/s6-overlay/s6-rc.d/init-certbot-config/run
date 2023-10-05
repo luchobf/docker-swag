@@ -62,7 +62,7 @@ fi
 
 
 # check to make sure DNSPLUGIN is selected if dns validation is used
-echo "Certbot DNS plugins available: ${CERTBOT_DNS_AUTHENTICATORS}"
+# echo "Certbot DNS plugins available: ${CERTBOT_DNS_AUTHENTICATORS}"
 if [[ "${VALIDATION}" = "dns" ]] && ! echo "${CERTBOT_DNS_AUTHENTICATORS}" | grep -q "${DNSPLUGIN}"; then
     echo "Please set the DNSPLUGIN variable to one of the following:"
     echo "${CERTBOT_DNS_AUTHENTICATORS}"
