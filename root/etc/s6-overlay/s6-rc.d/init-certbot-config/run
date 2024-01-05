@@ -63,11 +63,18 @@ fi
 
 # check to make sure DNSPLUGIN is selected if dns validation is used
 # echo "Certbot DNS plugins available: ${CERTBOT_DNS_AUTHENTICATORS}"
+CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e 's/^Entry point: EntryPoint(name='\''cpanel'\''/Entry point: EntryPoint(name='\''dns-cpanel'\''/' -e '/EntryPoint(name='\''dns-/!d' -e 's/^Entry point: EntryPoint(name='\''dns-\([^ ]*\)'\'',/\1/' | sort)
 if [[ "${VALIDATION}" = "dns" ]] && ! echo "${CERTBOT_DNS_AUTHENTICATORS}" | grep -q "${DNSPLUGIN}"; then
     echo "Please set the DNSPLUGIN variable to one of the following:"
     echo "${CERTBOT_DNS_AUTHENTICATORS}"
     sleep infinity
 fi
+
+# set owner of certbot's CONFIG_DIR, WORK_DIR, and LOGS_DIR to abc
+lsiown -R abc:abc \
+    /etc/letsencrypt \
+    /var/lib/letsencrypt \
+    /var/log/letsencrypt
 
 # set_ini_value logic:
 # - if the name is not found in the file, append the name=value to the end of the file
@@ -84,6 +91,7 @@ function set_ini_value() {
 
 # ensure config files exist and has at least one value set (set_ini_value does not work on empty files)
 touch /config/etc/letsencrypt/cli.ini
+lsiown abc:abc /config/etc/letsencrypt/cli.ini
 grep -qF 'agree-tos' /config/etc/letsencrypt/cli.ini || echo 'agree-tos=true' >>/config/etc/letsencrypt/cli.ini
 
 # copy dns default configs
@@ -342,7 +350,7 @@ if [[ "${VALIDATION}" = "dns" ]]; then
         sed -i "/^dns-${DNSPLUGIN}-propagation-seconds\b/d" /config/etc/letsencrypt/cli.ini
     fi
     # plugins that use old parameter naming convention
-    if [[ "${DNSPLUGIN}" =~ ^(cpanel|directadmin)$ ]]; then
+    if [[ "${DNSPLUGIN}" =~ ^(cpanel)$ ]]; then
         sed -i "/^dns-${DNSPLUGIN}-credentials\b/d" /config/etc/letsencrypt/cli.ini
         sed -i "/^dns-${DNSPLUGIN}-propagation-seconds\b/d" /config/etc/letsencrypt/cli.ini
         set_ini_value "authenticator" "${DNSPLUGIN}" /config/etc/letsencrypt/cli.ini

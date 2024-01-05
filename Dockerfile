@@ -77,7 +77,7 @@ RUN \
     php82-xsl \
     whois && \
     apk add gettext libintl && \
-  apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+  apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
     php82-pecl-mcrypt && \
   echo "**** install certbot plugins ****" && \
   if [ -z ${CERTBOT_VERSION+x} ]; then \
@@ -105,7 +105,6 @@ RUN \
     certbot-dns-domeneshop \
     certbot-dns-dreamhost \
     certbot-dns-duckdns \
-    certbot-dns-dynu \
     certbot-dns-freedns \
     certbot-dns-gehirn \
     certbot-dns-godaddy \
